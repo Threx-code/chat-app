@@ -1,0 +1,33 @@
+
+.alluser_info{
+    width: 80%;
+    margin: 4rem auto;
+    font-size: 1.5rem;
+}
+
+
+.alluser{
+    width: 80%;
+    margin: 2rem auto;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3rem;
+}
+
+@media screen and (max-width: 768px){
+    .alluser_info{
+        width: 90%;
+        margin: 2rem auto;
+        font-size: 1rem;
+    }
+
+    .alluser{
+        width: 90%;
+        margin: 2rem auto;
+        display: grid;
+        grid-template-columns: 1fr;
+    }
+
+
+    
+}

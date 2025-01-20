@@ -1,4 +1,5 @@
 import React, {useState, useEffect} from "react";
+import { useWalletClient, useAccount } from 'wagmi';
 import { useRouter } from "next/router";
 
 
@@ -29,21 +30,27 @@ export const ChatAppProvider = ({children}) => {
 
     const router = useRouter();
 
+    const { address, isConnected } = useAccount();
+
 
     // fetch data time of page LOAD
-
     const fetchdata = async() => {
+
         try{
-            //GET Contract
-            const contract = await connectingWithContract();
 
             // GET ACCOUNT
             const connectedAccount = await connectWallet();
             setAccount(connectedAccount);
 
+            //GET Contract
+            const contract = await connectingWithContract();
+            
             //GET USERNAME
             const username = await contract.getUsername(connectedAccount);
+            
             setUserName(username);
+
+            
 
             //GET FRIENDLIST
             const friendList = await contract.getFriendList();
@@ -54,13 +61,14 @@ export const ChatAppProvider = ({children}) => {
             setUserLists(allUsers);
 
         }catch(error){
+            console.log(error);
             setError("Please Install and Connect Your Wallet");
         }
     };
 
     useEffect(() => {
-        fetchdata();
-    }, []);
+        if (isConnected) fetchdata();
+    }, [isConnected]);
 
 
     //Read Message
@@ -71,26 +79,31 @@ export const ChatAppProvider = ({children}) => {
             setFriendMessages(messages);
 
         }catch(error){
-            setError("Currently you have no message");
+            setError(error);
         }
     };
 
 
     //CREATE ACCOUNT
-    const createAccount = async({accountName, accountaddress}) => {
+    const createAccount = async({accountName, accountAddress}) => {
         try{
-            if(accountName === "" || accountaddress === ""){
-                setError("Please fill all the fields");
-                return;
-            }
+            // if(accountName === "" || accountaddress === ""){
+            //     setError("Please fill all the fields");
+            //     return;
+            // }
+
             const contract = await connectingWithContract();
-            const getCreatedUser = await contract.createAccount(accountName);
+        
+
+            const createTransaction = await contract.createAccount(accountName);
             setLoading(true);
-            await getCreatedUser.wait();
+            await createTransaction.wait();
             setLoading(false);
-            window.location.reload();
+            //window.location.reload();
+           // console.log(createTransaction);
 
         }catch(error){
+            console.log(error);
             setError("Unable to create your account");
         }
     };
@@ -119,14 +132,62 @@ export const ChatAppProvider = ({children}) => {
 
     // SEND MESSAGE sendMessage(address friendKey, string calldata _message)
     const sendMessage = async({friendAddress, message}) => {
-        try{}catch(error){
+        try{
+            if(friendAddress === "" || message === ""){
+                setError("Please fill all the fields");
+                return;
+            }
+
+            const contract = await connectingWithContract();
+            const getSendMessage = contract.sendMessage(friendAddress, message);
+            setLoading(true);
+            getSendMessage.wait();
+            setLoading(false);
+            window.location.reload();
+
+        }catch(error){
             setError("Unable to send message");
         }
     };
 
+    //READ USER INFO
+    const readUser = async(useraddress) => {
+        try{
+            if(useraddress === ""){
+                setError("Please fill all the fields");
+                return;
+            }
+
+            const contract = await connectingWithContract();
+            const usernme = contract.getUsername(useraddress);
+            setCurrentUserName(usernme);
+            setCurrentUserAddress(useraddress);
+           
+        }catch(error){
+            setError("Unable to read user info");
+        }
+    }
+
 
     return(
-        <ChatAppContext.Provider value={{ readMessage, createAccount, addFriends }} >
+        <ChatAppContext.Provider value={{ 
+            readMessage, 
+            createAccount, 
+            addFriends, 
+            sendMessage, 
+            readUser,
+            connectWallet,
+            checkIfWalletConnected,
+            account,
+            userName,
+            friendLits,
+            friendMessages,
+            loading,
+            userLists,
+            error, 
+            currentUserName,
+            currentUserAddress
+        }} >
             {children}
         </ChatAppContext.Provider>
     );
